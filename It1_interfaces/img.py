@@ -9,58 +9,7 @@ class Img:
     def __init__(self):
         self.img = None
 
-    # def read(self, path: str | pathlib.Path,
-    #          size: tuple[int, int] | None = None,
-    #          keep_aspect: bool = False,
-    #          interpolation: int = cv2.INTER_AREA) -> "Img":
-    #     print("i hear 📸 📸 📸 📸 📸 📸 📸 📸 📸 📸 📸 📸 v📸 📸 📸 📸 📸 v📸 📸 📸 📸 📸 ?")
-    #     """
-    #     Load `path` into self.img and **optionally resize**.
-
-    #     Parameters
-    #     ----------
-    #     path : str | Path
-    #         Image file to load.
-    #     size : (width, height) | None
-    #         Target size in pixels.  If None, keep original.
-    #     keep_aspect : bool
-    #         • False  → resize exactly to `size`
-    #         • True   → shrink so the *longer* side fits `size` while
-    #                    preserving aspect ratio (no cropping).
-    #     interpolation : OpenCV flag
-    #         E.g.  `cv2.INTER_AREA` for shrink, `cv2.INTER_LINEAR` for enlarge.
-
-    #     Returns
-    #     -------
-    #     Img
-    #         `self`, so you can chain:  `sprite = Img().read("foo.png", (64,64))`
-    #     """
-    #     path = str(path)
-    #     self.img = cv2.imread(path, cv2.IMREAD_UNCHANGED)
-    #     if self.img is None:
-    #         print(f"Warning: failed to load image {path}")
-    #         return self
-
-    #     # הוסף קטע זה: אם זו תמונת חייל, הקטן לגודל תא הלוח (למשל 80x80)
-    #     if "sprites" in path and size is None:
-    #         size = (80, 80)  # או קח מהגדרת הלוח
-
-    #     if size is not None:
-    #         target_w, target_h = size
-    #         h, w = self.img.shape[:2]
-
-    #         if keep_aspect:
-    #             scale = min(target_w / w, target_h / h)
-    #             new_w, new_h = int(w * scale), int(h * scale)
-    #         else:
-    #             new_w, new_h = target_w, target_h
-
-    #         self.img = cv2.resize(self.img, (new_w, new_h), interpolation=interpolation)
-
-    #     if self.img.shape[2] == 3:
-    #         self.img = cv2.cvtColor(self.img, cv2.COLOR_BGR2BGRA)
-
-    #     return self
+    
     def read(self, path: str | pathlib.Path,
              size: tuple[int, int] | None = None,
              keep_aspect: bool = False,
