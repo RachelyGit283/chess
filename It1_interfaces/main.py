@@ -48,7 +48,7 @@ start_positions = [
 ]
 
 pieces = []
-piece_counters = {}  # Track count per piece type for unique IDs
+piece_counters = {} # Track count per piece type for unique IDs
 
 # צור את המשחק עם התור
 game = Game([], board)
