@@ -1,4 +1,3 @@
-
 import inspect
 import pathlib
 import queue, threading, time, cv2, math
@@ -7,16 +6,14 @@ from It1_interfaces.img  import Img
 from It1_interfaces.Board  import Board
 from It1_interfaces.Command  import Command
 from It1_interfaces.Piece  import Piece
-
-# ייבוא מערכות חדשות
-from It1_interfaces.EventSystem import Event, EventType, event_publisher
-from It1_interfaces.MessageOverlay import MessageOverlay
-from It1_interfaces.ScoreSystem import ScoreSystem
+# Import new components
+from It1_interfaces.EventSystem import EventType, event_publisher
 from It1_interfaces.MovesLog import MovesLog
+from It1_interfaces.ScoreSystem import ScoreSystem
 from It1_interfaces.SoundSystem import SoundSystem
+from It1_interfaces.MessageOverlay import MessageOverlay
 
 class InvalidBoard(Exception): ...
-
 # ────────────────────────────────────────────────────────────────────
 class Game:
     def __init__(self, pieces: List[Piece], board: Board, 
@@ -25,48 +22,24 @@ class Game:
         self.pieces = pieces  # שמור כרשימה במקום כמילון
         self.board = board
         self.user_input_queue = queue.Queue()
-        
-        # שמות שחקנים
-        self.player1_name = player1_name  # שחקן 1 - כלים לבנים
-        self.player2_name = player2_name  # שחקן 2 - כלים שחורים
+         # Player information
+        self.player1_name = player1_name  # White pieces
+        self.player2_name = player2_name  # Black pieces
         
         # מערכת שני שחקנים - ללא תורות
         self.selected_piece_player1 = None  # הכלי הנבחר של שחקן 1 (מקשי מספרים)
         self.selected_piece_player2 = None  # הכלי הנבחר של שחקן 2 (WASD)
         self.cursor_pos_player1 = [0, 7]  # מיקום הסמן של שחקן 1 (כלים לבנים) - התחל ליד הכלים הלבנים בשורה 7
         self.cursor_pos_player2 = [0, 0]  # מיקום הסמן של שחקן 2 (כלים שחורים) - התחל ליד הכלים השחורים בשורה 0
+        self.winner = None
         
+        # Initialize all new components
+        self.moves_log = MovesLog()
+        self.score_system = ScoreSystem(player1_name, player2_name)
+        self.sound_system = SoundSystem()
+        self.message_overlay = MessageOverlay()
         # דגל סיום המשחק
         self.game_over = False
-        
-        # Initialize new systems
-        print("🎮 Initializing game systems...")
-        
-        # מערכת הודעות
-        self.message_overlay = MessageOverlay()
-        print("💬 MessageOverlay initialized")
-        
-        # מערכת ניקוד
-        self.score_system = ScoreSystem(player1_name, player2_name)
-        print("🏆 ScoreSystem initialized")
-        
-        # רשימת מהלכים
-        self.moves_log = MovesLog()
-        print("📝 MovesLog initialized")
-        
-        # מערכת קולות
-        self.sound_system = SoundSystem()
-        print("🔊 SoundSystem initialized")
-        
-        # הגדלת חלון - חישוב גדלים חדשים
-        self.original_board_size = (board.img.img.shape[1], board.img.img.shape[0])  # (width, height)
-        self.ui_panel_width = 300  # רוחב פאנל ממשק המשתמש
-        self.new_window_width = self.original_board_size[0] + self.ui_panel_width+800
-        self.new_window_height = max(self.original_board_size[1], 600) +200 # גובה מינימלי
-        
-        print(f"🖼️  Original board size: {self.original_board_size}")
-        print(f"🖼️  New window size: {self.new_window_width}x{self.new_window_height}")
-        print("🎮 All game systems initialized successfully!")
 
     # ─── helpers ─────────────────────────────────────────────────────────────
     def game_time_ms(self) -> int:
@@ -88,32 +61,21 @@ class Game:
     # ─── main public entrypoint ──────────────────────────────────────────────
     def run(self):
         """Main game loop."""
-        self.start_user_input_thread()
+        self.start_user_input_thread() # QWe2e5
 
         start_ms = self.game_time_ms()
         for p in self.pieces:
             p.reset(start_ms)
 
-        # פרסום אירוע התחלת משחק
-        print("📢 Publishing GAME_START event...")
-        event_publisher.publish(EventType.GAME_START, {
-            'player1_name': self.player1_name,
-            'player2_name': self.player2_name,
-            'start_time': start_ms
-        })
-
         # ─────── main loop ──────────────────────────────────────────────────
         while not self.game_over:
-            now = self.game_time_ms()
+            now = self.game_time_ms() # monotonic time ! not computer time.
 
             # (1) update physics & animations
             for p in self.pieces:
                 p.update(now)
 
-            # (2) update new systems
-            self.message_overlay.update(now / 1000.0)  # Convert to seconds
-
-            # (3) handle queued Commands from mouse thread
+            # (2) handle queued Commands from mouse thread
             while not self.user_input_queue.empty():
                 print("📥 יש קומנד בתור!")  # DEBUG
                 cmd: Command = self.user_input_queue.get()
@@ -123,15 +85,15 @@ class Game:
                 if self.game_over:
                     break
 
-            # (4) draw current position
+            # (3) draw current position
             self._draw()
             if not self._show():           # returns False if user closed window
                 break
 
-            # (5) detect captures
+            # (4) detect captures
             self._resolve_collisions()
             
-            # (6) שליטה בקצב פריימים - 60 FPS
+            # (5) שליטה בקצב פריימים - 60 FPS
             import time
             time.sleep(1/60.0)  # ~16.7ms המתנה
 
@@ -161,14 +123,6 @@ class Game:
         
         for piece in self.pieces:
             if piece.piece_id == cmd.piece_id:
-                # פרסום אירוע תחילת תנועה
-                event_publisher.publish(EventType.PIECE_MOVE_START, {
-                    'piece_id': piece.piece_id,
-                    'from_position': self._get_piece_position(piece),
-                    'to_position': cmd.target,
-                    'timestamp': self.game_time_ms()
-                })
-                
                 piece.on_command(cmd, self.game_time_ms())
                 
                 # 🏆 בדיקת תנאי נצחון אחרי כל תנועה!
@@ -198,21 +152,6 @@ class Game:
         # קבל את המיקום של הכלי שהגיע
         target_pos = arriving_piece._state._physics.cell
         
-        # פרסום אירוע סיום תנועה
-        event_publisher.publish(EventType.PIECE_MOVE_END, {
-            'piece_id': cmd.piece_id,
-            'position': target_pos,
-            'timestamp': self.game_time_ms()
-        })
-        
-        # פרסום אירוע תנועה שהושלמה לרישום מהלכים
-        event_publisher.publish(EventType.MOVE_MADE, {
-            'piece_id': cmd.piece_id,
-            'from_position': getattr(cmd, 'from_position', (0, 0)),  # אם זמין
-            'to_position': target_pos,
-            'timestamp': self.game_time_ms()
-        })
-        
         # בדוק הכתרת חיילים לפני בדיקת תפיסה
         self._check_pawn_promotion(arriving_piece, target_pos)
         
@@ -241,27 +180,11 @@ class Game:
                         print(f"⚔️ {arriving_piece.piece_id} תפס את {piece.piece_id} במיקום {target_pos}!")
                         pieces_to_remove.append(piece)
                         
-                        # פרסום אירוע תפיסה
-                        event_publisher.publish(EventType.PIECE_CAPTURED, {
-                            'captured_piece': piece.piece_id,
-                            'capturing_piece': arriving_piece.piece_id,
-                            'position': target_pos,
-                            'timestamp': self.game_time_ms()
-                        })
-                        
                         # בדיקה מיוחדת למלכים
                         if piece.piece_id in ["KW0", "KB0"]:
                             print(f"🚨🚨 CRITICAL: KING CAPTURED! {piece.piece_id} was taken! 🚨🚨🚨")
                             print(f"💀 מלך נהרג: {piece.piece_id}")
                             print(f"🔥 זה יגרום לסיום המשחק!")
-                            
-                            # פרסום אירוע תפיסת מלך
-                            event_publisher.publish(EventType.KING_CAPTURED, {
-                                'king_piece': piece.piece_id,
-                                'capturing_piece': arriving_piece.piece_id,
-                                'position': target_pos,
-                                'timestamp': self.game_time_ms()
-                            })
                     else:
                         print(f"🛡️ אותו צבע - לא תוקף: {piece.piece_id} ו-{arriving_piece.piece_id}")
         
@@ -319,14 +242,6 @@ class Game:
             print(f"👑 חייל שחור {piece.piece_id} הגיע לשורה 7 - הכתרה למלכה!")
             
         if should_promote:
-            # פרסום אירוע הכתרה
-            event_publisher.publish(EventType.PAWN_PROMOTED, {
-                'pawn_piece': piece.piece_id,
-                'new_piece': new_piece_type + str(len([p for p in self.pieces if p.piece_id.startswith(new_piece_type)])),
-                'position': target_pos,
-                'timestamp': self.game_time_ms()
-            })
-            
             self._promote_pawn_to_queen(piece, new_piece_type, target_pos)
 
     def _promote_pawn_to_queen(self, pawn, queen_type, position):
@@ -357,7 +272,7 @@ class Game:
         print(f"🎉 הכתרה הושלמה בהצלחה! {pawn.piece_id} -> {queen_id}")
 
     def _draw(self):
-        """Draw the current game state with enlarged window and UI panels."""
+        """Draw the current game state."""
         # צור עותק נקי של הלוח לכל פריים
         display_board = self.clone_board()
         
@@ -369,74 +284,9 @@ class Game:
         # ציור סמנים של השחקנים
         self._draw_cursors(display_board)
         
-        # יצירת תמונה מורחבת עם פאנלים
+        # הצגה
         if hasattr(display_board, "img"):
-            board_img = display_board.img.img
-            
-            # יצירת תמונה חדשה גדולה יותר
-            extended_img = self._create_extended_display(board_img)
-            
-            # ציור הודעות על התמונה
-            self.message_overlay.draw_on_image(extended_img)
-            
-            cv2.imshow("Chess Game", extended_img)
-
-    def _create_extended_display(self, board_img):
-        """Create extended display with UI panels."""
-        import numpy as np
-        
-        # יצירת תמונה חדשה עם גודל מורחב
-        extended_img = np.ones((self.new_window_height, self.new_window_width, 3), dtype=np.uint8) * 240  # רקע אפור בהיר
-        
-        # העתקת תמונת הלוח לחלק השמאלי
-        board_height, board_width = board_img.shape[:2]
-        if board_img.shape[2] == 4:
-            board_img = board_img[:, :, :3]  # הסרת ערוץ Alpha
-        x_offset = (self.new_window_width - board_width) // 2
-        y_offset = (self.new_window_height - board_height) // 2
-        extended_img[y_offset:y_offset + board_height, x_offset:x_offset + board_width] = board_img
-
-        # extended_img[0:board_height, 0:board_width] = board_img
-        
-        # חישוב מיקום הפאנלים בצד ימין
-        panel_x = x_offset + board_width + 10
-        panel_width = self.ui_panel_width - 20
-        
-        # פאנל ניקוד
-        score_panel_y = 10
-        score_panel_height = 200
-        self.score_system.draw_on_image(extended_img, panel_x, score_panel_y, panel_width, score_panel_height)
-        
-        # פאנל רשימת מהלכים
-        moves_panel_y = score_panel_y + score_panel_height + 20
-        moves_panel_height = 300
-        self.moves_log.draw_on_image(extended_img, panel_x, moves_panel_y, panel_width, moves_panel_height)
-        
-        # פאנל פקדים
-        controls_panel_y = moves_panel_y + moves_panel_height + 20
-        self._draw_controls_panel(extended_img, panel_x, controls_panel_y, panel_width, 100)
-        
-        return extended_img
-
-    def _draw_controls_panel(self, img, x, y, width, height):
-        """Draw controls instruction panel."""
-        # רקע הפאנל
-        cv2.rectangle(img, (x, y), (x + width, y + height), (220, 220, 220), -1)
-        cv2.rectangle(img, (x, y), (x + width, y + height), (0, 0, 0), 2)
-        
-        # כותרת
-        cv2.putText(img, "Controls", (x + 10, y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
-        
-        # הוראות
-        controls = [
-            f"{self.player1_name}: 8246+Enter",
-            f"{self.player2_name}: WASD+Space",
-            "Q/ESC: Exit"
-        ]
-        
-        for i, control in enumerate(controls):
-            cv2.putText(img, control, (x + 10, y + 40 + i * 20), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 1)
+            cv2.imshow("Chess Game", display_board.img.img)
 
     def _draw_cursors(self, board):
         """Draw player cursors on the board."""
@@ -504,7 +354,72 @@ class Game:
                 return False  # Exit if ESC was pressed
         
         return True
+# def _handle_keyboard_input(self, key):
+#     """Handle keyboard input for both players."""
+#     print(f"\n=== KEY PRESSED: {key} ===")
+#     if 32 <= key <= 126:
+#         print(f"Character: '{chr(key)}'")
+#     else:
+#         print(f"Special key code: {key}")
+    
+#     # Check for exit keys first
+#     if key == 27 or key == ord('q'):  # ESC or Q
+#         self.game_over = True  # Indicate that the game is over
+#         return True  # Signal to exit
+    
+#     # Convert to character for easier handling
+#     char = None
+#     if 32 <= key <= 126:
+#         char = chr(key).lower()
 
+#     # Initialize detected_hebrew
+#     detected_hebrew = None
+    
+#     # Hebrew key detection
+#     if key in hebrew_keys:
+#         detected_hebrew = hebrew_keys[key]
+#         print(f"🔥 Hebrew key detected: {key} -> {detected_hebrew}")
+        
+#     # Player 2 controls (WASD)
+#     wasd_detected = False
+    
+#     # W key (UP)
+#     if (key in [119, 87] or char == 'w' or detected_hebrew == 'w'):
+#         print("🔥 Player 2: Moving UP (W) - WASD WORKING!")
+#         self._move_cursor_player2(0, -1)
+#         wasd_detected = True
+#     # S key (DOWN)
+#     elif (key in [115, 83] or char == 's' or detected_hebrew == 's'):
+#         print("🔥 Player 2: Moving DOWN (S) - WASD WORKING!")
+#         self._move_cursor_player2(0, 1)
+#         wasd_detected = True
+#     # A key (LEFT)
+#     elif (key in [97, 65] or char == 'a' or detected_hebrew == 'a'):
+#         print("🔥 Player 2: Moving LEFT (A) - WASD WORKING!")
+#         self._move_cursor_player2(-1, 0)
+#         wasd_detected = True
+#     # D key (RIGHT)
+#     elif (key in [100, 68] or char == 'd' or detected_hebrew == 'd'):
+#         print("🔥 Player 2: Moving RIGHT (D) - WASD WORKING!")
+#         self._move_cursor_player2(1, 0)
+#         wasd_detected = True
+
+#     # Player 1 controls - Number keys and now Arrow keys
+#     if key == 56 or char == '8' or key == 2490368:  # Up arrow
+#         print("⚡ Player 1: Moving UP (8/UP ARROW) - NUMBERS WORKING!")
+#         self._move_cursor_player1(0, -1)
+#     elif key == 50 or char == '2' or key == 2621440:  # Down arrow
+#         print("⚡ Player 1: Moving DOWN (2/DOWN ARROW) - NUMBERS WORKING!")
+#         self._move_cursor_player1(0, 1)
+#     elif key == 52 or char == '4' or key == 2424832:  # Left arrow
+#         print("⚡ Player 1: Moving LEFT (4/LEFT ARROW) - NUMBERS WORKING!")
+#         self._move_cursor_player1(-1, 0)
+#     elif key == 54 or char == '6' or key == 2555904:  # Right arrow
+#         print("⚡ Player 1: Moving RIGHT (6/RIGHT ARROW) - NUMBERS WORKING!")
+#         self._move_cursor_player1(1, 0)
+    
+#     print("=== KEY PROCESSING COMPLETE ===\n")
+#     return False  # Don't exit
     def _handle_keyboard_input(self, key):
         """Handle keyboard input for both players."""
         print(f"\n=== KEY PRESSED: {key} ===")
@@ -527,6 +442,16 @@ class Game:
         wasd_detected = False
         
         # תמיכה מלאה במקלדת עברית! זיהוי מתקדם של מקשים עבריים
+        # hebrew_keys = {
+        #     # Hebrew letter codes - ו (vav) = W
+        #     1493: 'w', 215: 'w', 246: 'w', 1500: 'w',
+        #     # Hebrew letter codes - ש (shin) = A  
+        #     1513: 'a', 249: 'a', 251: 'a', 1506: 'a',
+        #     # Hebrew letter codes - ד (dalet) = S
+        #     1491: 's', 212: 's', 213: 's', 1504: 's',
+        #     # Hebrew letter codes - כ (kaf) = D
+        #     1499: 'd', 235: 'd', 237: 'd', 1507: 'd'
+        # }
         hebrew_keys = {
         ord('\''): 'w',
         ord('ש'): 'a',
@@ -665,7 +590,7 @@ class Game:
             # בדיקה אם מנסים להזיז לאותו מיקום (אנימציית קפיצה במקום)
             current_pos = self._get_piece_position(self.selected_piece_player1)
             if current_pos == (x, y):
-                print(f"🔄 שחקן 1 מבצע קפיצה במקום לכלי: {self.selected_piece_player1.piece_id}")
+                print(f"� שחקן 1 מבצע קפיצה במקום לכלי: {self.selected_piece_player1.piece_id}")
                 print(f"PLAYER 1 JUMP IN PLACE FOR PIECE: {self.selected_piece_player1.piece_id}")
                 # בצע אנימציית קפיצה לאותו מיקום
                 jump_cmd = Command(
@@ -705,7 +630,7 @@ class Game:
             # בדיקה אם מנסים להזיז לאותו מיקום (אנימציית קפיצה במקום)
             current_pos = self._get_piece_position(self.selected_piece_player2)
             if current_pos == (x, y):
-                print(f"🔄 שחקן 2 מבצע קפיצה במקום לכלי: {self.selected_piece_player2.piece_id}")
+                print(f"� שחקן 2 מבצע קפיצה במקום לכלי: {self.selected_piece_player2.piece_id}")
                 print(f"PLAYER 2 JUMP IN PLACE FOR PIECE: {self.selected_piece_player2.piece_id}")
                 # בצע אנימציית קפיצה לאותו מיקום
                 jump_cmd = Command(
@@ -838,7 +763,7 @@ class Game:
                 print(f"⚔️ {piece.piece_id} תופס את {target_piece.piece_id}!")
                 # בדיקה מיוחדת למלכים - DEBUG מורחב!
                 if target_piece.piece_id in ["KW0", "KB0"]:
-                    print(f"🚨🚨 CRITICAL: KING CAPTURED! {target_piece.piece_id} was taken! 🚨🚨🚨")
+                    print(f"�🚨🚨 CRITICAL: KING CAPTURED! {target_piece.piece_id} was taken! 🚨🚨🚨")
                     print(f"💀 מלך נהרג: {target_piece.piece_id}")
                     print(f"🔥 זה אמור לגרום לסיום המשחק מיד!")
                     
@@ -854,9 +779,6 @@ class Game:
             target=(final_x, final_y),  # שימוש במיקום המעודכן
             params=None
         )
-        
-        # שמירת מיקום ההתחלה לצורך רישום המהלך
-        move_cmd.from_position = current_pos
         
         # הוספת הפקודה לתור - State.process_command יטפל במכונת המצבים
         self.user_input_queue.put(move_cmd)
@@ -1012,21 +934,14 @@ class Game:
             elif piece.piece_id == "KB0":  # מלך שחור
                 black_king_alive = True
         
-        winner = None
-        winning_reason = "King captured"
-        
         if not white_king_alive:
-            winner = self.player2_name  # שחקן 2 (שחור) ניצח
-            print(f"🏆 {self.player2_name} (שחור) ניצח! המלך הלבן נהרג!")
-            print(f"🏆 {self.player2_name.upper()} (BLACK) WINS! White King was captured!")
-            print(f"🏆 THE WINNER IS {self.player2_name.upper()} (BLACK)!")
+            print("🏆 שחקן 2 (שחור) ניצח! המלך הלבן נהרג!")
+            print("🏆 PLAYER 2 (BLACK) WINS! White King was captured!")
+            print("🏆 THE WINNER IS PLAYER 2 (BLACK)!")
         elif not black_king_alive:
-            winner = self.player1_name  # שחקן 1 (לבן) ניצח
             print("🏆 שחקן 1 (לבן) ניצח! המלך השחור נהרג!")
             print("🏆 PLAYER 1 (WHITE) WINS! Black King was captured!")
             print("🏆 THE WINNER IS PLAYER 1 (WHITE)!")
         else:
             print("🎮 המשחק נגמר!")
             print("🎮 Game Over!")
-
-
