@@ -25,7 +25,7 @@ class Game:
         self.pieces = pieces  # שמור כרשימה במקום כמילון
         self.board = board
         self.user_input_queue = queue.Queue()
-        
+        extended_img=None
         # שמות שחקנים
         self.player1_name = player1_name  # שחקן 1 - כלים לבנים
         self.player2_name = player2_name  # שחקן 2 - כלים שחורים
@@ -387,7 +387,7 @@ class Game:
         
         # יצירת תמונה חדשה עם גודל מורחב
         extended_img = np.ones((self.new_window_height, self.new_window_width, 3), dtype=np.uint8) * 240  # רקע אפור בהיר
-        
+        self.extended_img=extended_img
         # העתקת תמונת הלוח לחלק השמאלי
         board_height, board_width = board_img.shape[:2]
         if board_img.shape[2] == 4:
@@ -1017,16 +1017,49 @@ class Game:
         
         if not white_king_alive:
             winner = self.player2_name  # שחקן 2 (שחור) ניצח
+            self._show_victory_image(winner)
             print(f"🏆 {self.player2_name} (שחור) ניצח! המלך הלבן נהרג!")
             print(f"🏆 {self.player2_name.upper()} (BLACK) WINS! White King was captured!")
             print(f"🏆 THE WINNER IS {self.player2_name.upper()} (BLACK)!")
         elif not black_king_alive:
             winner = self.player1_name  # שחקן 1 (לבן) ניצח
+            self._show_victory_image(winner)
             print("🏆 שחקן 1 (לבן) ניצח! המלך השחור נהרג!")
             print("🏆 PLAYER 1 (WHITE) WINS! Black King was captured!")
             print("🏆 THE WINNER IS PLAYER 1 (WHITE)!")
         else:
             print("🎮 המשחק נגמר!")
             print("🎮 Game Over!")
+
+    def _show_victory_image(self,winner):
+        import cv2
+        print("llllllllllllllllllllllllllllllllllllllllllllllllllll",winner)
+        if winner=="Player 1":
+            win_img = cv2.imread("wight.jpg")  # נתיב יחסי
+        elif winner=="Player 2":
+            win_img = cv2.imread("black.jpg")
+        if win_img is None:
+            raise ValueError("תמונת ניצחון win.jpg לא נטענה. בדוק את הנתיב.")
+
+        h, w = win_img.shape[:2]
+        H, W = self.extended_img.shape[:2]
+            
+            # התאם גודל אם צריך
+        if h > H or w > W:
+            scale = min(H / h, W / w)
+            new_size = (int(w * scale), int(h * scale))
+            win_img = cv2.resize(win_img, new_size, interpolation=cv2.INTER_AREA)
+            h, w = win_img.shape[:2]
+
+            # מיקום התמונה במרכז
+        x_offset = (W - w) // 2
+        y_offset = (H - h) // 2
+
+            # הדבק את תמונת הניצחון על החלון
+        self.extended_img[y_offset:y_offset + h, x_offset:x_offset + w] = win_img
+        cv2.imshow("Chess Game", self.extended_img)
+        cv2.waitKey(2000)  # מציג לשתי שניות
+        cv2.destroyWindow("Chess Game")
+        
 
 

@@ -20,7 +20,9 @@ class State:
             "rest_long": {"rest_done": "idle"},
         }
         self.rest_start = None
-        self.rest_time = {"rest_short": 2000, "rest_long": 5000}  # 2 שניות קצר, 5 שניות ארוך
+        self.rest_time = {"rest_short": 2, "rest_long": 1}  # 2 שניות קצר, 5 שניות ארוך
+
+        # self.rest_time = {"rest_short": 2000, "rest_long": 5000}  # 2 שניות קצר, 5 שניות ארוך
         self._last_cmd: Optional[Command] = None
 
     def reset(self, cmd: Command):

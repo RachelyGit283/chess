@@ -50,7 +50,9 @@ class ScoreSystem:
             return
         
         # Get piece type from piece ID (first character after color)
-        captured_type = captured_piece[1] if len(captured_piece) > 1 else 'P'
+        captured_type = captured_piece[0] if len(captured_piece) > 0 else 'P'
+
+        # captured_type = captured_piece[1] if len(captured_piece) > 1 else 'P'
         piece_value = self.PIECE_VALUES.get(captured_type, 0)
         
         # Determine which player made the capture
