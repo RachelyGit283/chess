@@ -20,11 +20,16 @@ class Message:
 class MessageOverlay:
     """Component that displays temporary messages and game notifications."""
     
-    def __init__(self):
-        self.messages: List[Message] = []
+    def __init__(self,duration: float = 2.0):
+        self.messages: List[Message] = []        
+        self.duration = duration
+
         self.current_time = time.time()
         
         # Subscribe to relevant events
+        # event_publisher.subscribe(EventType.MESSAGE_ADDED, self.on_message_added)
+        # event_publisher.subscribe(EventType.MESSAGE_REMOVED, self.on_message_removed)
+
         event_publisher.subscribe(EventType.GAME_START, self.on_game_start)
         event_publisher.subscribe(EventType.GAME_END, self.on_game_end)
         event_publisher.subscribe(EventType.KING_CAPTURED, self.on_king_captured)

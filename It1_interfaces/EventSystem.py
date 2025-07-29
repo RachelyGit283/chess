@@ -14,7 +14,8 @@ class EventType(Enum):
     PIECE_MOVE_END = "piece_move_end"
     KING_CAPTURED = "king_captured"
     PAWN_PROMOTED = "pawn_promoted"
-
+    # MESSAGE_ADDED = "message_added"        # ✅ חדש
+    # MESSAGE_REMOVED = "message_removed"    # ✅ חדש
 @dataclass
 class Event:
     type: EventType
