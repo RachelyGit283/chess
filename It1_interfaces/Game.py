@@ -7,8 +7,6 @@ from It1_interfaces.img  import Img
 from It1_interfaces.Board  import Board
 from It1_interfaces.Command  import Command
 from It1_interfaces.Piece  import Piece
-
-# ייבוא מערכות חדשות
 from It1_interfaces.EventSystem import Event, EventType, event_publisher
 from It1_interfaces.MessageOverlay import MessageOverlay
 from It1_interfaces.ScoreSystem import ScoreSystem
@@ -16,7 +14,6 @@ from It1_interfaces.MovesLog import MovesLog
 from It1_interfaces.SoundSystem import SoundSystem
 
 class InvalidBoard(Exception): ...
-
 # ────────────────────────────────────────────────────────────────────
 class Game:
     def __init__(self, pieces: List[Piece], board: Board, 
@@ -1033,7 +1030,6 @@ class Game:
 
     def _show_victory_image(self,winner):
         import cv2
-        print("llllllllllllllllllllllllllllllllllllllllllllllllllll",winner)
         if winner=="Player 1":
             win_img = cv2.imread("wight.jpg")  # נתיב יחסי
         elif winner=="Player 2":
