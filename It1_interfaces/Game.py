@@ -1,6 +1,8 @@
 
 import inspect
 import pathlib
+import numpy as np
+
 import queue, threading, time, cv2, math
 from typing import List, Dict, Tuple, Optional
 from It1_interfaces.img  import Img
@@ -17,12 +19,12 @@ class InvalidBoard(Exception): ...
 # ────────────────────────────────────────────────────────────────────
 class Game:
     def __init__(self, pieces: List[Piece], board: Board, 
-                 player1_name: str = "Player 1", player2_name: str = "Player 2"):
+                 player1_name: str = "Player 1", player2_name: str = "Player 2",extended_img: Optional[np.ndarray] = None):
         """Initialize the game with pieces and board."""
         self.pieces = pieces  # שמור כרשימה במקום כמילון
         self.board = board
         self.user_input_queue = queue.Queue()
-        extended_img=None
+        self.extended_img=extended_img
         # שמות שחקנים
         self.player1_name = player1_name  # שחקן 1 - כלים לבנים
         self.player2_name = player2_name  # שחקן 2 - כלים שחורים
@@ -1037,23 +1039,23 @@ class Game:
         if win_img is None:
             raise ValueError("תמונת ניצחון win.jpg לא נטענה. בדוק את הנתיב.")
 
-        h, w = win_img.shape[:2]
-        H, W = self.extended_img.shape[:2]
+        # h, w = win_img.shape[:2]
+        # H, W = self.extended_img.shape[:2]
             
-            # התאם גודל אם צריך
-        if h > H or w > W:
-            scale = min(H / h, W / w)
-            new_size = (int(w * scale), int(h * scale))
-            win_img = cv2.resize(win_img, new_size, interpolation=cv2.INTER_AREA)
-            h, w = win_img.shape[:2]
+        #     # התאם גודל אם צריך
+        # if h > H or w > W:
+        #     scale = min(H / h, W / w)
+        #     new_size = (int(w * scale), int(h * scale))
+        #     win_img = cv2.resize(win_img, new_size, interpolation=cv2.INTER_AREA)
+        #     h, w = win_img.shape[:2]
 
-            # מיקום התמונה במרכז
-        x_offset = (W - w) // 2
-        y_offset = (H - h) // 2
+        #     # מיקום התמונה במרכז
+        # x_offset = (W - w) // 2
+        # y_offset = (H - h) // 2
 
-            # הדבק את תמונת הניצחון על החלון
-        self.extended_img[y_offset:y_offset + h, x_offset:x_offset + w] = win_img
-        cv2.imshow("Chess Game", self.extended_img)
+        #     # הדבק את תמונת הניצחון על החלון
+        # self.extended_img[y_offset:y_offset + h, x_offset:x_offset + w] = win_img
+        # cv2.imshow("Chess Game", self.extended_img)
         cv2.waitKey(2000)  # מציג לשתי שניות
         cv2.destroyWindow("Chess Game")
         
