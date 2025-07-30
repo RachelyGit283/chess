@@ -69,7 +69,7 @@ class ChessGameServer:
             ("KW", (4, 7)), ("BW", (5, 7)), ("NW", (6, 7)), ("RW", (7, 7)),
         ]
 
-    async def handle_client(self, websocket, path):
+    async def handle_client(self, websocket):
         """Handle new client connection."""
         try:
             self.logger.info(f"New client connected: {websocket.remote_address}")
@@ -222,10 +222,10 @@ class GameSession:
         self.selected_piece_player2 = None
         
         # Initialize pieces
-        self._initialize_pieces(start_positions)
         
         # Setup logging
         self.logger = logging.getLogger(f"GameSession-{game_id}")
+        self._initialize_pieces(start_positions)
 
     def _initialize_pieces(self, start_positions):
         """Initialize all pieces on the board."""
@@ -240,7 +240,20 @@ class GameSession:
                 piece_counters[p_type] += 1
                 
                 # Create piece (without game queue for server)
-                piece = self.piece_factory.create_piece(p_type, cell, None)
+                # print("Creating piece of type:", p_type, "at cell:", cell, type(cell))
+                # print("print1✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅",self.piece_factory)
+                
+                print(">>>> BEFORE create_piece")
+                try:
+                    piece = self.piece_factory.create_piece(p_type,cell, None)
+                except Exception as e:
+                    print("🔥 ERROR INSIDE create_piece:", e)
+                print(">>>> AFTER create_piece")
+
+
+                # piece = self.piece_factory.create_piece(p_type,cell, None)
+                # print("print3✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅")
+
                 piece.piece_id = unique_id
                 piece._state._physics.piece_id = unique_id
                 self.pieces.append(piece)
@@ -383,6 +396,8 @@ class GameSession:
             
             # Remove pawn and add queen
             self.pieces.remove(piece)
+            print("Creating piece of type:", new_piece_type, "at cell:", target_pos, type(target_pos))
+
             new_queen = self.piece_factory.create_piece(new_piece_type, target_pos, None)
             new_queen.piece_id = queen_id
             new_queen._state._physics.piece_id = queen_id
@@ -588,7 +603,6 @@ class GameSession:
             "type": "error",
             "message": message
         })
-
 
 async def main():
     """Start the chess game server."""

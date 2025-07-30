@@ -12,11 +12,12 @@ class PieceFactory:
     def __init__(self, board: Board, pieces_root: pathlib.Path):
         """Initialize piece factory with board and 
         generates the library of piece templates from the pieces directory.."""
+        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌",type(pieces_root))
+
         self.board = board
         self.pieces_root = pieces_root
         self.gfx_factory = GraphicsFactory()
         self.physics_factory = PhysicsFactory(board)
-
     def _build_state_machine(self, piece_dir: pathlib.Path, cell: Tuple[int, int], piece_id: str, game_queue=None) -> State:
         # טען moves.txt
         moves_path = piece_dir / "moves.txt"
@@ -41,8 +42,13 @@ class PieceFactory:
         )
         return State(moves, graphics, physics, game_queue)
 
-    def create_piece(self, p_type: str, cell: Tuple[int, int], game_queue=None) -> Piece:
+    def create_piece(self, p_type: str, cell: tuple[int, int], game_queue=None) -> Piece:
+
         """Create a piece of the specified type at the given cell."""
+        print("2✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅")
+
         piece_dir = self.pieces_root / p_type
+
         state = self._build_state_machine(piece_dir, cell, p_type, game_queue)
+
         return Piece(piece_id=p_type, init_state=state)

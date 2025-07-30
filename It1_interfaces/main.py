@@ -7,7 +7,6 @@ import cv2
 
 print("🎮 Starting chess game...")
 print("🎮 מתחיל משחק שחמט...")
-
 # טען את התמונה
 print("📸 Loading board image...")
 img = Img()
@@ -15,7 +14,7 @@ img = Img()
 img_path = pathlib.Path(__file__).parent.parent / "board.png"
 # img_path = pathlib.Path(r"C:\Users\סולי\Downloads\chess\chess\CTD25\board.png")
 # img = Img().read("board.png", size=(64 * 8, 64 * 8))  
-img.read(str(img_path), size=(822, 822))
+img.read(str("C:/Users/board.png"), size=(822, 822))
 
 # img.read("board.png", size=(822, 822))
 print("📸 Image loaded:", img.img is not None)
@@ -32,7 +31,7 @@ board = Board(
     H_cells=8,
     img=img
 )
-pieces_root = pathlib.Path("/pieces")
+# pieces_root = pathlib.Path("/pieces")
 
 pieces_root = pathlib.Path(r"C:\Users\סולי\Downloads\chess\chess\CTD25\pieces")
 factory = PieceFactory(board, pieces_root)
@@ -60,7 +59,6 @@ for p_type, cell in start_positions:
             piece_counters[p_type] = 0
         unique_id = f"{p_type}{piece_counters[p_type]}"
         piece_counters[p_type] += 1
-        
         piece = factory.create_piece(p_type, cell, game.user_input_queue)
         # Override the piece ID with unique ID
         piece.piece_id = unique_id
@@ -72,23 +70,14 @@ for p_type, cell in start_positions:
 
 # עדכן את המשחק עם הכלים
 game.pieces = pieces
-
-
 display_board = board.clone()
 now = 0
 for piece in pieces:
     piece.draw_on_board(display_board, now)
 
 
-
 cv2.imshow("Chess - מצב התחלתי", display_board.img.img)
-
-
-
-cv2.waitKey(0) 
+cv2.waitKey(0)
 
 cv2.destroyAllWindows()        
 game.run()
-
-
-
