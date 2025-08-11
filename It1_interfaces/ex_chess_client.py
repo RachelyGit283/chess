@@ -526,6 +526,7 @@ import pathlib
 import threading
 import time
 from typing import Dict, List, Optional, Tuple
+import base64
 
 # Import your existing classes for visualization
 from It1_interfaces.img import Img
@@ -942,7 +943,106 @@ class ChessClient:
         else:
             cv2.putText(img, "No moves yet...", (x + 10, y + 50), 
                        cv2.FONT_HERSHEY_SIMPLEX, 0.4, (128, 128, 128), 1)
-
+    # def draw_moves_panel(self, img, x, y, width, height):
+    #     """ציור פאנל המהלכים - מבוסס על MovesLog"""
+    #     # רקע הפאנל
+    #     cv2.rectangle(img, (x, y), (x + width, y + height), (255, 255, 220), -1)  # רקע צהוב בהיר
+    #     cv2.rectangle(img, (x, y), (x + width, y + height), (0, 0, 0), 2)
+        
+    #     # כותרת
+    #     cv2.putText(img, "Moves Log", (x + 10, y + 20), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 0), 2)
+        
+    #     if self.moves_data and 'moves_list' in self.moves_data:
+    #         moves_list = self.moves_data['moves_list']
+    #         move_count = self.moves_data.get('move_count', 0)
+            
+    #         cv2.putText(img, f"Total moves: {move_count}", (x + 10, y + 45), 
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 0, 0), 1)
+            
+    #         # Debug - בדוק מה סוג הנתונים ברשימה
+    #         if moves_list:
+    #             first_move = moves_list[0]
+    #             print(f"🔍 Debug - First move type: {type(first_move)}, content: {first_move}")
+            
+    #         # התאם לפורמט הנתונים
+    #         processed_moves = []
+    #         for move in moves_list:
+    #             if isinstance(move, dict):
+    #                 # פורמט dictionary - השתמש בו כמו שהוא
+    #                 processed_moves.append(move)
+    #             elif isinstance(move, str):
+    #                 # פורמט string - נסה לפרש אותו
+    #                 try:
+    #                     # אם זה JSON string, נסה לפרש
+    #                     import json
+    #                     parsed_move = json.loads(move)
+    #                     processed_moves.append(parsed_move)
+    #                 except:
+    #                     # אם זה לא JSON, צור dictionary פשוט
+    #                     processed_moves.append({
+    #                         'piece_id': 'Unknown',
+    #                         'description': str(move),
+    #                         'timestamp': 0
+    #                     })
+    #             else:
+    #                 # פורמט לא מוכר
+    #                 processed_moves.append({
+    #                     'piece_id': 'Unknown',
+    #                     'description': str(move),
+    #                     'timestamp': 0
+    #                 })
+            
+    #         # הצג מהלכים לפי השחקן
+    #         if self.my_player is not None:
+    #             # סנן מהלכים לפי השחקן
+    #             if self.my_player == 1:
+    #                 # שחקן 1 - כלים לבנים (מכילים W)
+    #                 filtered_moves = [move for move in processed_moves if 'W' in move.get('piece_id', '')]
+    #                 title_suffix = " (Your moves - White)"
+    #             elif self.my_player == 2:
+    #                 # שחקן 2 - כלים שחורים (מכילים B)
+    #                 filtered_moves = [move for move in processed_moves if 'B' in move.get('piece_id', '')]
+    #                 title_suffix = " (Your moves - Black)"
+    #         else:
+    #             filtered_moves = processed_moves
+    #             title_suffix = " (All moves)"
+            
+    #         # הצג כותרת משנה
+    #         cv2.putText(img, title_suffix, (x + 10, y + 65), 
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (0, 0, 0), 1)
+            
+    #         # הצג עד 10 מהלכים אחרונים
+    #         display_moves = filtered_moves[-10:] if len(filtered_moves) > 10 else filtered_moves
+            
+    #         for i, move in enumerate(display_moves):
+    #             # התאם לפורמט החדש של המהלכים
+    #             piece_id = move.get('piece_id', 'Unknown')
+    #             description = move.get('description', 'Move')
+    #             timestamp = move.get('timestamp', 0)
+                
+    #             # פורמט טקסט המהלך
+    #             move_text = f"{i+1}. {piece_id}: {description}"
+    #             if len(move_text) > 35:  # קצר טקסט ארוך
+    #                 move_text = move_text[:32] + "..."
+                
+    #             # צבע שונה לפי סוג הכלי
+    #             color = (0, 0, 255) if 'W' in piece_id else (255, 0, 0)  # אדום ללבן, כחול לשחור
+    #             if self.my_player is None:  # צופה רואה הכל בשחור
+    #                 color = (0, 0, 0)
+                    
+    #             cv2.putText(img, move_text, (x + 10, y + 85 + i * 20), 
+    #                     cv2.FONT_HERSHEY_SIMPLEX, 0.3, color, 1)
+                
+    #             # הוסף timestamp אם יש מקום
+    #             if timestamp > 0 and i < 8:  # רק לכמה מהלכים כדי לא לבלבל
+    #                 time_str = f"({timestamp % 100000}ms)"  # קצר את הזמן
+    #                 cv2.putText(img, time_str, (x + 250, y + 85 + i * 20), 
+    #                         cv2.FONT_HERSHEY_SIMPLEX, 0.25, (128, 128, 128), 1)
+    #     else:
+    #         cv2.putText(img, "No moves yet...", (x + 10, y + 50), 
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.4, (128, 128, 128), 1)
+    #         cv2.putText(img, "Waiting for move data...", (x + 10, y + 70), 
+    #                 cv2.FONT_HERSHEY_SIMPLEX, 0.35, (128, 128, 128), 1)
     def draw_controls_panel(self, img, x, y, width, height):
         """ציור פאנל הפקדים"""
         # רקע הפאנל

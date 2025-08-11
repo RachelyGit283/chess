@@ -793,15 +793,21 @@ class Game:
         print(f"לא נמצא כלי במיקום ({x}, {y})")
         return None
 
+    # def _is_player_piece(self, piece, player_num):
+    #     """Check if piece belongs to specified player."""
+    #     # שחקן 1 = כלים לבנים (W), שחקן 2 = כלים שחורים (B)
+    #     # הכלים עכשיו מזוהים כ-PW0, PW1, PB0, PB1, etc.
+    #     if player_num == 1:
+    #         return 'W' in piece.piece_id  # כלים לבנים
+    #     else:
+    #         return 'B' in piece.piece_id  # כלים שחורים
     def _is_player_piece(self, piece, player_num):
-        """Check if piece belongs to specified player."""
-        # שחקן 1 = כלים לבנים (W), שחקן 2 = כלים שחורים (B)
-        # הכלים עכשיו מזוהים כ-PW0, PW1, PB0, PB1, etc.
+        color_char = piece.piece_id[1] if len(piece.piece_id) >= 2 else ''
         if player_num == 1:
-            return 'W' in piece.piece_id  # כלים לבנים
-        else:
-            return 'B' in piece.piece_id  # כלים שחורים
-
+            return color_char == 'W'
+        elif player_num == 2:
+            return color_char == 'B'
+        return False
     def _move_piece(self, piece, new_x, new_y, player_num):
         """Move piece to new position using Command system."""
         # בדיקה שהמהלך חוקי
@@ -1056,8 +1062,24 @@ class Game:
         #     # הדבק את תמונת הניצחון על החלון
         # self.extended_img[y_offset:y_offset + h, x_offset:x_offset + w] = win_img
         # cv2.imshow("Chess Game", self.extended_img)
-        cv2.waitKey(2000)  # מציג לשתי שניות
-        cv2.destroyWindow("Chess Game")
-        
+        # cv2.waitKey(2000)  # מציג לשתי שניות
+        # cv2.destroyWindow("Chess Game")
+        # import cv2
+# טען את התמונה מקובץ
+        # img = cv2.imread("wight.jpg")  # ודא שקובץ בשם זה נמצא בתיקייה
+
+        # בדיקה שהתמונה נטענה בהצלחה
+        # if img is None:
+        #     print("🚫 לא נמצאה תמונה בשם example.jpg")
+        # else:
+            # הצג את התמונה בחלון
+        cv2.imshow("תמונה מוצגת", win_img)
+
+            # המתן עד שהמשתמש ילחץ מקש כלשהו
+        cv2.waitKey(50000)
+
+            # סגור את כל החלונות
+        cv2.destroyAllWindows()
+                
 
 

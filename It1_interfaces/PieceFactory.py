@@ -12,7 +12,6 @@ class PieceFactory:
     def __init__(self, board: Board, pieces_root: pathlib.Path):
         """Initialize piece factory with board and 
         generates the library of piece templates from the pieces directory.."""
-        print("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌",type(pieces_root))
 
         self.board = board
         self.pieces_root = pieces_root
@@ -45,7 +44,6 @@ class PieceFactory:
     def create_piece(self, p_type: str, cell: tuple[int, int], game_queue=None) -> Piece:
 
         """Create a piece of the specified type at the given cell."""
-        print("2✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅")
 
         piece_dir = self.pieces_root / p_type
 

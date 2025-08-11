@@ -12,7 +12,14 @@ class MoveEntry:
     black_move: str = ""
     white_time: str = ""
     black_time: str = ""
-
+    def to_dict(self):
+        return {
+            "move_number": self.move_number,
+            "white_move": self.white_move,
+            "black_move": self.black_move,
+            "white_time": self.white_time,
+            "black_time": self.black_time
+        }
 class MovesLog:
     """Component that tracks and displays chess moves history."""
     
